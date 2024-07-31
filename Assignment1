@@ -1,0 +1,39 @@
+#RachelRozet
+rm(list=ls())
+#install.packages("rio")
+#install.packages("moments")
+library(rio)
+library(moments)
+setwd("/Users/rachelrozet/Downloads")
+master=import("6304 Assignment 1 Data Set.xlsx")
+set.seed(98707961)
+sample=master[sample(1:nrow(master),150),]
+colnames(sample)=tolower(make.names(colnames(sample)))
+attach(sample)
+attach(master)
+
+# Deliverable 1
+str(sample)
+
+# Deliverable 2
+mean(total.assets)
+median(total.assets)
+sd(total.assets)
+skewness(total.assets)
+kurtosis(total.assets)
+
+# Deliverable 3
+boxplot(members, main="NCUA Members Boxplot", col="green", pch=19)
+
+# Deliverable 4
+min(total.assets)
+max(total.assets)
+quantile(total.assets,xlim=47.67726,max=1607.626,probs=seq(0,1,.2))
+
+# Deliverable 5
+hist(members,col="red",main="NCUA Members Histogram", xlim=c(0,250000), xlab="Members")
+
+# Deliverable 6
+boxplot(total.assets,total.deposits,total.loans,pch=19,col=c("red","green","blue"),
+        main="Credit Union Important Measures",
+        names=c("Total Assets","Total Deposits","Total Loans"))

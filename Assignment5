@@ -1,0 +1,122 @@
+# Rachel Rozet
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+library(dplyr)
+master=import("6304 Assignment 6 Data.xlsx")
+colnames(master)=tolower(make.names(colnames(master)))
+
+# Create sample
+set.seed(98707961)
+sample=sample_frac(master,0.4)
+
+# Deliverable 1
+part.1.out=lm(mpg~cubic.inches+horsepower+weight,data=sample)
+
+# Deliverable 2
+summary(part.1.out)
+
+# Other Evidence
+par(mfrow=c(2,2))
+# Linearity
+plot(sample$mpg,part.1.out$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(part.1.out$residuals,pch=19,
+       main="Normality")
+qqline(part.1.out$residuals,lwd=3,col="red")
+hist(part.1.out$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(part.1.out$residuals),
+            sd(part.1.out$residuals)),
+      from=min(part.1.out$residuals),
+      to=max(part.1.out$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(part.1.out$fitted.values,ylim=c(-5,5),
+     scale(part.1.out$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+# Deliverable 3
+confint(part.1.out)
+
+# Deliverable 4
+leverages=hat(model.matrix(part.1.out))
+plot(leverages,pch=19)
+abline(3*mean(leverages),0,col="red",lwd=3)
+sample[leverages>(3*mean(leverages)),c("year","make","model")]
+sample[leverages>(3*mean(leverages)),1]
+
+# Deliverable 5
+# Squared values for horsepower and weight
+part.2a.out=lm(mpg~horsepower+weight+I(horsepower^2)+I(weight^2),data=sample)
+summary(part.2a.out)
+#Squared value for only horsepower (weight not significant)
+part.2b.out=lm(mpg~horsepower+weight+I(horsepower^2),data=sample)
+summary(part.2b.out)
+# Testing interaction
+part.2c.out=lm(mpg~horsepower+weight+I(horsepower^2)+horsepower:weight,data=sample)
+summary(part.2c.out)
+
+# Assumptions
+par(mfrow=c(2,2))
+# Linearity
+plot(sample$mpg,part.2b.out$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(part.2b.out$residuals,pch=19,
+       main="Normality")
+qqline(part.2b.out$residuals,lwd=3,col="red")
+hist(part.2b.out$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(part.2b.out$residuals),
+            sd(part.2b.out$residuals)),
+      from=min(part.2b.out$residuals),
+      to=max(part.2b.out$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(part.2b.out$fitted.values,ylim=c(-5,5),
+     scale(part.2b.out$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+# Deliverable 6
+part.3.out=lm(mpg~cubic.inches+horsepower+weight+year,data=sample)
+summary(part.3.out)
+
+# Assumptions
+par(mfrow=c(2,2))
+# Linearity
+plot(sample$mpg,part.3.out$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(part.3.out$residuals,pch=19,
+       main="Normality")
+qqline(part.3.out$residuals,lwd=3,col="red")
+hist(part.3.out$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(part.3.out$residuals),
+            sd(part.3.out$residuals)),
+      from=min(part.3.out$residuals),
+      to=max(part.3.out$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(part.3.out$fitted.values,ylim=c(-5,5),
+     scale(part.3.out$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+sample$year=as.factor(sample$year)
+part.3.out = lm(mpg~cubic.inches+horsepower+weight+year, data = sample)
+summary(part.3.out)

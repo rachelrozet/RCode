@@ -1,0 +1,207 @@
+# Rachel Rozet
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+library(corrplot)
+library(car)
+master=import("6304 Assignment 7 Data.xlsx")
+colnames(master)=tolower(make.names(colnames(master)))
+
+# Pre-processing
+master$payment_type=as.factor(master$payment_type)
+str(master)
+
+# Create Primary Sample
+set.seed(98707961)
+primary=master[sample(1:nrow(master),500),]
+
+# Create Secondary Sample
+set.seed(98707961)
+secondary=master[sample(1:nrow(master),800),]
+
+# Deliverable 1
+convar = subset(primary,select=c("trip_seconds","trip_miles","fare","tips"))
+plot(convar,pch=19)
+
+# Deliverable 2
+cormatrix = cor(convar)
+corrplot(cormatrix, method="ellipse")
+corrplot(cormatrix, method="number")
+
+# Deliverable 3
+fullmodel=lm(trip_total~.-taxi_id,data=primary)
+summary(fullmodel)
+
+# Assumptions Graphs
+par(mfrow=c(2,2))
+# Linearity
+plot(primary$trip_total,fullmodel$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(fullmodel$residuals,pch=19,
+       main="Normality")
+qqline(fullmodel$residuals,lwd=3,col="red")
+hist(fullmodel$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(fullmodel$residuals),
+            sd(fullmodel$residuals)),
+      from=min(fullmodel$residuals),
+      to=max(fullmodel$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(fullmodel$fitted.values,ylim=c(-5,5),
+     scale(fullmodel$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+# Deliverable 4
+# Remove Multi-collinearity
+no.seconds=lm(trip_total~.-taxi_id-trip_seconds,data=primary)
+summary(no.seconds)
+
+squared_model=lm(trip_total~trip_seconds+I(trip_seconds^2)+fare+I(fare^2)+tips,data=primary)
+summary(squared_model)
+
+par(mfrow=c(2,2))
+# Linearity
+plot(primary$trip_total,squared_model$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(squared_model$residuals,pch=19,
+       main="Normality")
+qqline(squared_model$residuals,lwd=3,col="red")
+hist(squared_model$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(squared_model$residuals),
+            sd(squared_model$residuals)),
+      from=min(squared_model$residuals),
+      to=max(squared_model$residuals),
+      lwd=3,col="blue",add=TRUE)
+
+# Equality of Variances
+plot(squared_model$fitted.values,
+     scale(squared_model$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+fare.tips=lm(trip_total~fare+tips,data=primary)
+summary(fare.tips)
+
+par(mfrow=c(2,2))
+# Linearity
+plot(primary$trip_total,no.seconds$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(no.seconds$residuals,pch=19,
+       main="Normality")
+qqline(no.seconds$residuals,lwd=3,col="red")
+hist(no.seconds$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(no.seconds$residuals),
+            sd(no.seconds$residuals)),
+      from=min(no.seconds$residuals),
+      to=max(no.seconds$residuals),
+      lwd=3,col="blue",add=TRUE)
+
+# Equality of Variances
+plot(no.seconds$fitted.values,ylim=c(-5,5),
+     scale(no.seconds$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+no.fare=lm(trip_total~.-taxi_id-fare,data=primary)
+summary(no.fare)
+
+par(mfrow=c(2,2))
+# Linearity
+plot(primary$trip_total,no.fare$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(no.fare$residuals,pch=19,
+       main="Normality")
+qqline(no.fare$residuals,lwd=3,col="red")
+hist(no.fare$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(no.fare$residuals),
+            sd(no.fare$residuals)),
+      from=min(no.fare$residuals),
+      to=max(no.fare$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(no.fare$fitted.values,ylim=c(-5,5),
+     scale(no.fare$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+
+# Deliverable 5 - Squared Model
+
+par(mfrow=c(2,2))
+# Linearity
+plot(primary$trip_total,fare.tips$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(fare.tips$residuals,pch=19,
+       main="Normality")
+qqline(fare.tips$residuals,lwd=3,col="red")
+hist(fare.tips$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(fare.tips$residuals),
+            sd(fare.tips$residuals)),
+      from=min(fare.tips$residuals),
+      to=max(fare.tips$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(fare.tips$fitted.values,
+     scale(fare.tips$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+# Deliverable 6
+vif(squared_model)
+vif(fare.tips)
+
+# Deliverable 7
+fare.tips2=lm(trip_total~fare+tips,data=secondary)
+summary(fare.tips2)
+
+par(mfrow=c(2,2))
+# Linearity
+plot(secondary$trip_total,fare.tips2$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(fare.tips2$residuals,pch=19,
+       main="Normality")
+qqline(fare.tips2$residuals,lwd=3,col="red")
+hist(fare.tips2$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(fare.tips2$residuals),
+            sd(fare.tips2$residuals)),
+      from=min(fare.tips2$residuals),
+      to=max(fare.tips2$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(fare.tips2$fitted.values,
+     scale(fare.tips2$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+

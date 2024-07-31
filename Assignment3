@@ -1,0 +1,55 @@
+# Rachel Rozet
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+master=import("6304 Assignment 4 Data.xlsx",skip=2)
+colnames(master)=tolower(make.names(colnames(master)))
+
+# Create subsets
+smaller=subset(master,population<=median(population))
+greater=subset(master,population>median(population))
+
+# Create subset samples
+set.seed(98707961)
+SMLsample=smaller[sample(1:nrow(smaller),12),]
+set.seed(98707961)
+GRTsample=greater[sample(1:nrow(greater),12),]
+
+# Deliverable 1
+str(SMLsample)
+str(GRTsample)
+
+# Deliverable 2
+boxplot(SMLsample$crime.rate.per.100k.popln,
+        GRTsample$crime.rate.per.100k.popln,
+        col=c("red","blue"),
+        names=c("Below Median Population", "Above Median Population"),
+        main="Comparing Crime Rates for Florida Counties Above & Below Median Population")
+
+# Deliverable 3
+t.test(SMLsample$total.crimes)
+
+# Deliverable 4
+mean(SMLsample$total.crimes)
+
+# Deliverable 5
+t.test(SMLsample$clearance.rate.per.100.offenses,
+       GRTsample$clearance.rate.per.100.offenses)
+
+# Deliverable 6
+t.test(SMLsample$vehicle.theft,mu=30,alternative="greater")
+
+# Deliverable 7
+t.test(SMLsample$clearance.rate.per.100.offenses,
+       GRTsample$clearance.rate.per.100.offenses)
+
+# Deliverable 8
+deliverable=t.test(SMLsample$clearance.rate.per.100.offenses,
+          GRTsample$clearance.rate.per.100.offenses)
+t.test(SMLsample$clearance.rate.per.100.offenses,
+       GRTsample$clearance.rate.per.100.offenses,
+       mu=deliverable$conf.int[1],alternative="two.sided")
+t.test(SMLsample$clearance.rate.per.100.offenses,
+       GRTsample$clearance.rate.per.100.offenses,
+       mu=deliverable$conf.int[2],alternative="two.sided")

@@ -1,0 +1,147 @@
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+library(corrplot)
+library(car)
+library(dplyr)
+master=import("Nashville Housing Raw Data-2.xlsx",na.strings=c("NA",""))
+colnames(master)=tolower(make.names(colnames(master)))
+
+# Pre-processing---------------------------------
+
+# Count of Columns with Null Values
+master %>% summarise_all(~ sum(is.na(.)))
+
+# Remove Unneeded Columns
+master.reduced=master[,c(4:5, 7:15, 17:19, 21:31)]
+master.no.NA = na.omit(master.reduced)
+
+str(master.no.NA)
+summary(master.no.NA)
+
+# Get Sample-------------------------------------
+subsetdata=subset(master.no.NA,year.built>"1969")
+
+set.seed(98707961)
+sample=subsetdata[sample(1:nrow(subsetdata),700),]
+
+# Exploratory Data Analysis----------------------
+str(sample)
+t.test(sample$sale.price)
+t.test(sample$sale.price,mu=350000,alternative="greater")
+
+# Regression-------------------------------------
+
+par(mar=c(5.1,6,4.1,2.1))
+
+# Set Factors
+sample$sold.as.vacant=as.factor(sample$sold.as.vacant)
+sample$multiple.parcels.involved.in.sale=as.factor(sample$multiple.parcels.involved.in.sale)
+sample$exterior.wall=as.factor(sample$exterior.wall)
+sample$foundation.type=as.factor(sample$foundation.type)
+sample$tax.district=as.factor(sample$tax.district)
+sample$land.use=as.factor(sample$land.use)
+sample$bedrooms=as.factor(sample$bedrooms)
+sample$full.bath=as.factor(sample$full.bath)
+
+
+# Relevel Factors
+sample$land.use=relevel(sample$land.use,ref="SPLIT CLASS")
+sample$exterior.wall=relevel(sample$exterior.wall, ref="STUCCO")
+sample$foundation.type=relevel(sample$foundation.type,ref="TYPICAL")
+
+firstmodel = lm(sale.price~land.use+sold.as.vacant+multiple.parcels.involved.in.sale+neighborhood+acreage+building.value+land.value+finished.area+bedrooms+full.bath+half.bath+exterior.wall+foundation.type+tax.district+year.built,data=sample)
+summary(firstmodel)
+
+vif(firstmodel)
+
+# Model Testing -------------------------------------------------
+
+# Continuous Variables Subset
+con.data = subset(sample,select=c("acreage","land.value","building.value","finished.area","year.built","bedrooms","full.bath","half.bath"))
+cormatrix = cor(con.data)              
+corrplot(cormatrix, method="number")
+
+con1.data = subset(sample,select=c("acreage","building.value","year.built","bedrooms","half.bath"))
+cor1matrix = cor(con1.data)              
+corrplot(cor1matrix, method="number")
+
+othermodel = lm(sale.price~sold.as.vacant+multiple.parcels.involved.in.sale+building.value+exterior.wall+tax.district,data=sample)
+summary(othermodel)
+vif(othermodel)
+
+plot(sample$sale.price,othermodel$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+
+
+thirdmodel = lm(sale.price~sold.as.vacant+multiple.parcels.involved.in.sale+building.value+I(building.value^2)+I(building.value^3)+exterior.wall+tax.district,data=sample)
+summary(thirdmodel)
+
+vifmodel = lm(sale.price~sold.as.vacant+multiple.parcels.involved.in.sale+building.value+exterior.wall+tax.district,data=sample)
+vif(vifmodel)
+
+# Assumptions Graphs
+par(mfrow=c(2,2))
+# Linearity
+plot(sample$sale.price,othermodel$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(othermodel$residuals,pch=19,
+       main="Normality")
+qqline(othermodel$residuals,lwd=3,col="red")
+hist(othermodel$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(othermodel$residuals),
+            sd(othermodel$residuals)),
+      from=min(othermodel$residuals),
+      to=max(othermodel$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(othermodel$fitted.values,ylim=c(-5,5),
+     scale(othermodel$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+prediction = data.frame(sold.as.vacant="No",multiple.parcels.involved.in.sale="No",exterior.wall="BRICK",building.value=145000,tax.district="URBAN SERVICES DISTRICT")
+predict(thirdmodel,prediction,interval="none")
+predict(thirdmodel,prediction,interval="predict")
+predict(thirdmodel,prediction,interval="confidence")
+
+# ANOVA------------------------------------
+# Equality of Variances
+
+leveneTest(sale.price~bedrooms,data=sample)
+leveneTest(sale.price~full.bath,data=sample)
+leveneTest(sale.price~tax.district,data=sample)
+
+# ANOVA Test
+bedrooms.out=aov(sale.price~bedrooms,data=sample)
+summary(bedrooms.out)
+
+bath.out=aov(sale.price~full.bath,data=sample)
+summary(bath.out)
+
+tax.out=aov(sale.price~tax.district,data=sample)
+summary(tax.out)
+
+# Tukey Test & Graphs
+bedroom.graph=TukeyHSD(bedrooms.out)
+bedroom.graph
+par(mar=c(5.1,8,4.1,2.1))
+plot(bedroom.graph,las=1)
+
+bath.graph=TukeyHSD(bath.out)
+bath.graph
+par(mar=c(5.1,8,4.1,2.1))
+plot(bath.graph,las=1)
+
+tax.graph=TukeyHSD(tax.out)
+tax.graph
+par(mar=c(5.1,26,4.1,2.1))
+plot(tax.graph,las=1)
+

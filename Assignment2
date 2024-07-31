@@ -1,0 +1,81 @@
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+master=import("6304 Assignment 2 Data.xlsx")
+colnames(master)=tolower(make.names(colnames(master)))
+attach(master)
+
+# Part 1
+str(master)
+
+# Part 2
+par(mfrow=c(2,2))
+hist(rick.blaine,col="red",main="Rick Blane")
+hist(louis.renault,col="blue",main="Louis Renault")
+hist(ilsa.lund,col="green",main="Ilsa Lund")
+hist(victor.laszlo,col="purple",main="Victor Laszlo")
+qqnorm(rick.blaine,main="Rick Blane",pch=19)
+qqline(rick.blaine,lwd=3,col="red")
+qqnorm(louis.renault,main="Louis Renault",pch=19)
+qqline(louis.renault,lwd=3,col="blue")
+qqnorm(ilsa.lund,main="Ilsa Lund",pch=19)
+qqline(ilsa.lund,col="green",lwd=3)
+qqnorm(victor.laszlo,main="Victor Laszlo",pch=19)
+qqline(victor.laszlo,lwd=3,col="purple")
+par(mfrow=c(1,1))
+skewness(rick.blaine)
+kurtosis(rick.blaine)
+skewness(louis.renault)
+kurtosis(louis.renault)
+skewness(ilsa.lund)
+kurtosis(ilsa.lund)
+skewness(victor.laszlo)
+kurtosis(victor.laszlo)
+
+# Part 3
+signor.ugarte=data.frame(matrix(nrow=1000))
+colnames(signor.ugarte)=c("sample.means")
+for(i in 1:1000){
+  signor.ugarte[i,1]=mean(master[sample(1:nrow(master),50),2])
+}
+par(mfrow=c(1,2))
+hist(signor.ugarte$sample.means,col="red",
+     main="1000 Means/Louis Renault")
+qqnorm(signor.ugarte$sample.means,pch=19,
+       main="1000 Means/Louis Renault")
+qqline(signor.ugarte$sample.means,lwd=3,col="red")
+par(mfrow=c(1,1))
+summary(signor.ugarte$sample.means)
+skewness(signor.ugarte$sample.means)
+kurtosis(signor.ugarte$sample.means)
+
+# Another Approach
+# No Column Names
+signor.ferrari=data.frame()
+for(i in 1:1000){
+  signor.ferrari[i,1]=
+    mean(master[sample(1:nrow(master),
+                       50,replace=FALSE),3])
+}
+par(mfrow=c(1,2))
+hist(signor.ferrari[,1],col="red",main="Signor Ferrari")
+qqnorm(signor.ferrari[,1],pch=19,main="Signor Ferrari")
+qqline(signor.ferrari[,1],col="red",lwd=3)
+par(mfrow=c(1,1))
+skewness(signor.ferrari[,1])
+kurtosis(signor.ferrari[,1])
+
+# This approach will also work.
+# REPLICATE() command instead of FOR() loop
+# Note major.strasser is a vector, not a data frame.
+major.strasser=
+  replicate(1000,mean(master[sample(1:nrow(master),
+                                    50,replace=FALSE),3]))
+par(mfrow=c(1,2))
+hist(major.strasser,col="red",main="Major Strasser")
+qqnorm(major.strasser,pch=19,main="Major Strasser")
+qqline(major.strasser,col="red",lwd=3)
+par(mfrow=c(1,1))
+skewness(major.strasser)
+kurtosis(major.strasser)

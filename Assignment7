@@ -1,0 +1,113 @@
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+library(corrplot)
+library(car)
+master=import("6304 Assignment 8 Data.xlsx")
+colnames(master)=tolower(make.names(colnames(master)))
+
+names(master)[names(master) == 'births..000.'] <- 'births'
+attach(master)
+
+# Deliverable 1
+plot(index,births,pch=19,type="l",
+     main="Index vs. Births")
+
+# Deliverable 2
+basemodel=lm(births~index,data=master)
+summary(basemodel)
+
+# Deliverable 3
+points(basemodel$fitted.values,type="l",lwd=3,col="red")
+
+# Deliverable 4
+durbin.out=car::durbinWatsonTest(basemodel)
+durbin.out
+
+# Deliverable 5
+indices=data.frame(month=1:12,average=0,index=0)
+for(i in 1:12) {
+  count=0
+  for(j in 1:nrow(master)) {
+    if(i==master$month[j]) {
+      indices$average[i]=indices$average[i]+master$births[j]
+      count=count+1
+      }
+    }
+  indices$average[i]=indices$average[i]/count
+  indices$index[i]=indices$average[i]/mean(master$births)
+  }
+
+for(i in 1:12){
+  for(j in 1:nrow(master)){
+    if(i==master$month[j]){
+      master$deseason.births[j]=master$births[j]/indices$index[i]
+      }
+    }
+  }
+
+# Deliverable 6
+desreg.out=lm(deseason.births~index,data=master)
+summary(desreg.out)
+
+desreg.squared=lm(deseason.births~index+I(index^2),data=master)
+summary(desreg.squared)
+
+desreg.cubed=lm(deseason.births~index+I(index^2)+I(index^3),data=master)
+summary(desreg.cubed)
+
+# Deliverable 7
+master$deseason.forecast=desreg.out$fitted.values
+for(i in 1:12){
+  for(j in 1:nrow(master)){
+    if(i==master$month[j]){
+      master$reseason.forecast[j]=master$deseason.forecast[j]*
+        indices$index[i]
+      }
+    }
+}
+
+plot(index,births,pch=19,type="l",
+     main="Reasonalized Model")
+points(master$reseason.forecast,type="l",lwd=3,col="red")
+cor(master$births,master$reseason.forecast)
+
+master$deseason.forecast.squared=desreg.squared$fitted.values
+for(i in 1:12){
+  for(j in 1:nrow(master)){
+    if(i==master$month[j]){
+      master$reseason.forecast.squared[j]=master$deseason.forecast.squared[j]*
+        indices$index[i]
+    }
+  }
+}
+
+plot(index,births,pch=19,type="l",
+     main="Reasonalized Squared Model")
+points(master$reseason.forecast.squared,type="l",lwd=3,col="red")
+cor(master$births,master$reseason.forecast.squared)
+
+master$deseason.forecast.cubed=desreg.cubed$fitted.values
+for(i in 1:12){
+  for(j in 1:nrow(master)){
+    if(i==master$month[j]){
+      master$reseason.forecast.cubed[j]=master$deseason.forecast.cubed[j]*
+        indices$index[i]
+    }
+  }
+}
+
+plot(index,births,pch=19,type="l",
+     main="Reasonalized Cubed Model")
+points(master$reseason.forecast.cubed,type="l",lwd=3,col="red")
+cor(master$births,master$reseason.forecast.cubed)
+
+# Deliverable 8
+plot(master$reseason.forecast,type="l",lwd=3,col="red", main="Reasonalized Model Comparison")
+points(index,births,pch=19,type="l",col="black")
+points(master$reseason.forecast.squared,type="l",lwd=3,col="blue")
+points(master$reseason.forecast.cubed,type="l",lwd=3,col="green")
+# Add a legend
+legend("topleft", legend=c("Original Data","Base Model", "Squared Model", "Cubed Model"),
+       col=c("black","red", "blue", "green"), lty=1:2, cex=0.8)

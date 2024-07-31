@@ -1,0 +1,63 @@
+# Rachel Rozet
+rm(list=ls())
+setwd("/Users/rachelrozet/Downloads")
+library(rio)
+library(moments)
+master=import("6304 Assignment 5 Data.xlsx")
+colnames(master)=tolower(make.names(colnames(master)))
+
+# Create subset
+subsetdata=subset(master,region=="vermont" & year>="2000" & (condition=="good" | condition=="excellent"))
+
+# Create subset sample
+set.seed(98707961)
+sample=subsetdata[sample(1:nrow(subsetdata),70),]
+
+# Deliverable 1
+part.1.out=lm(price~odometer,data=sample)
+
+# Deliverable 2
+summary(part.1.out)
+
+# Deliverable 4
+plot(sample$odometer,sample$price,pch=19,
+     main="Price & Odometer Raw Data Plot")
+abline(part.1.out,lwd=3,col="red")
+cor(sample$price,part.1.out$fitted.values)
+cor(sample$price,part.1.out$fitted.values)^2
+
+# Other Evidence
+par(mfrow=c(2,2))
+# Linearity
+plot(sample$price,part.1.out$fitted.values,pch=19,
+     main="Linearity")
+abline(0,1,col="red",lwd=3)
+# Normality
+qqnorm(part.1.out$residuals,pch=19,
+       main="Normality")
+qqline(part.1.out$residuals,lwd=3,col="red")
+hist(part.1.out$residuals,col="red",
+     main="Normality",
+     probability=TRUE)
+curve(dnorm(x,mean(part.1.out$residuals),
+            sd(part.1.out$residuals)),
+      from=min(part.1.out$residuals),
+      to=max(part.1.out$residuals),
+      lwd=3,col="blue",add=TRUE)
+# Equality of Variances
+plot(part.1.out$fitted.values,ylim=c(-5,5),
+     scale(part.1.out$residuals),
+     pch=19,main="Equality of Variances")
+abline(0,0,lwd=3,col="red")
+par(mfrow=c(1,1))
+
+# Predict
+prediction = data.frame(odometer=248435)
+predict(part.1.out,prediction,interval="none")
+predict(part.1.out,prediction,interval="predict")
+predict(part.1.out,prediction,interval="confidence")
+
+confint(part.1.out)
+
+prediction2 = data.frame(odometer=0)
+predict(part.1.out,prediction2,interval="none")
